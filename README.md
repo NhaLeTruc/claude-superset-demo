@@ -142,10 +142,10 @@ git clone -b claude/implementation-plan-011CV5PhVoxvJPFFU55NUG8D <repo-url>
 cd insight-engineer-challenge
 
 # 2. Start all services
-docker-compose up -d
+docker compose up -d
 
 # 3. Wait for services (2-3 minutes)
-docker-compose ps  # All services should show "Up"
+docker compose ps  # All services should show "Up"
 
 # 4. Generate sample data
 docker exec goodnote-spark-master python /opt/spark-apps/scripts/generate_data.py \
@@ -529,7 +529,7 @@ pytest tests/unit/test_engagement_transforms.py::test_calculate_dau_basic -v
 ```bash
 # Solution: Increase Docker memory limit
 # Docker Desktop → Settings → Resources → Memory: 8GB+
-docker-compose down && docker-compose up -d
+docker compose down && docker compose up -d
 ```
 
 **Problem:** Spark job fails with OOM
@@ -641,5 +641,5 @@ For questions or issues:
 # Clone and start in 5 minutes
 git clone -b claude/implementation-plan-011CV5PhVoxvJPFFU55NUG8D <repo-url>
 cd insight-engineer-challenge
-docker-compose up -d
+docker compose up -d
 ```

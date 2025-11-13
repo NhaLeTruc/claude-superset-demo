@@ -15,7 +15,7 @@ echo ""
 # Check if container is running
 if ! docker ps | grep -q goodnote-spark-dev; then
     echo -e "${YELLOW}⚠️  Container not running. Starting services...${NC}"
-    docker-compose up -d spark-dev
+    docker compose up -d spark-dev
     echo -e "${GREEN}✅ Waiting for container to be ready...${NC}"
     sleep 5
 fi

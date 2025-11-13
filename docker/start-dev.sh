@@ -12,11 +12,11 @@ echo ""
 
 # Build and start services
 echo -e "${YELLOW}📦 Building Docker images...${NC}"
-docker-compose build
+docker compose build
 
 echo ""
 echo -e "${YELLOW}🚀 Starting services...${NC}"
-docker-compose up -d
+docker compose up -d
 
 echo ""
 echo -e "${GREEN}✅ Development environment is ready!${NC}"
@@ -27,7 +27,7 @@ echo "  • PostgreSQL   : localhost:5432 (user: analytics_user, pass: analytics
 echo ""
 echo "Quick commands:"
 echo "  • Run tests    : ./docker/run-tests.sh"
-echo "  • Stop all     : docker-compose down"
-echo "  • View logs    : docker-compose logs -f"
+echo "  • Stop all     : docker compose down"
+echo "  • View logs    : docker compose logs -f"
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

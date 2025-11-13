@@ -104,7 +104,7 @@ insight-engineer-challenge/
 │   └── 05_results_visualization.ipynb # Matplotlib/Seaborn visualizations
 │
 ├── docker/                            # Docker configuration
-│   ├── docker-compose.yml             # Main compose file
+│   ├── compose.yml                    # Main compose file
 │   ├── .env.example                   # Environment variables for Docker
 │   ├── spark/
 │   │   ├── Dockerfile                 # Custom Spark image
@@ -429,7 +429,7 @@ def test_salted_join(spark_session):
 
 ### Docker Configuration (`docker/`)
 
-#### `docker/docker-compose.yml`
+#### `docker/compose.yml`
 ```yaml
 version: '3.8'
 
@@ -737,7 +737,7 @@ cp .env.example .env
 
 # Start Docker services
 cd docker
-docker-compose up -d
+docker compose up -d
 
 # Generate sample data
 python scripts/generate_data.py

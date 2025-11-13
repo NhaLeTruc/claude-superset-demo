@@ -1,0 +1,97 @@
+#!/bin/bash
+# TDD Enforcement Pre-commit Hook
+# This hook ensures tests exist before implementation can be committed
+
+echo "🔍 TDD Compliance Check..."
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Get staged Python files in src/
+SRC_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '^src/.*\.py$' | grep -v '__init__.py')
+
+if [ -z "$SRC_FILES" ]; then
+    echo "${GREEN}✅ No source files to check${NC}"
+    exit 0
+fi
+
+echo "📝 Checking source files:"
+echo "$SRC_FILES"
+
+VIOLATIONS=0
+
+# Check each source file
+while IFS= read -r src_file; do
+    if [ -z "$src_file" ]; then
+        continue
+    fi
+
+    # Determine expected test file path
+    # src/transforms/engagement_transforms.py → tests/unit/test_engagement_transforms.py
+    # src/utils/data_quality.py → tests/unit/test_data_quality.py
+
+    filename=$(basename "$src_file" .py)
+
+    if [[ "$src_file" == src/transforms/* ]]; then
+        test_file="tests/unit/test_${filename}.py"
+    elif [[ "$src_file" == src/utils/* ]]; then
+        test_file="tests/unit/test_${filename}.py"
+    elif [[ "$src_file" == src/jobs/* ]]; then
+        test_file="tests/integration/test_${filename}.py"
+    else
+        # For other files, just check tests/unit
+        test_file="tests/unit/test_${filename}.py"
+    fi
+
+    # Check if test file exists
+    if [ ! -f "$test_file" ]; then
+        echo "${RED}❌ VIOLATION: $src_file has no tests!${NC}"
+        echo "${YELLOW}   Expected: $test_file${NC}"
+        VIOLATIONS=$((VIOLATIONS + 1))
+    else
+        # Check if test file is also staged or already committed
+        if git ls-files --error-unmatch "$test_file" > /dev/null 2>&1; then
+            echo "${GREEN}✅ $src_file → $test_file${NC}"
+        else
+            echo "${RED}❌ VIOLATION: $test_file exists but not tracked by git!${NC}"
+            echo "${YELLOW}   Run: git add $test_file${NC}"
+            VIOLATIONS=$((VIOLATIONS + 1))
+        fi
+    fi
+done <<< "$SRC_FILES"
+
+# Check for test files being committed
+TEST_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '^tests/.*\.py$')
+if [ -n "$TEST_FILES" ]; then
+    echo ""
+    echo "${GREEN}📋 Test files in this commit:${NC}"
+    echo "$TEST_FILES"
+fi
+
+# Final verdict
+echo ""
+if [ $VIOLATIONS -gt 0 ]; then
+    echo "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo "${RED}❌ TDD VIOLATION: $VIOLATIONS source file(s) without tests${NC}"
+    echo "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo "${YELLOW}TDD requires tests BEFORE implementation.${NC}"
+    echo ""
+    echo "To fix:"
+    echo "  1. Write tests for the above files"
+    echo "  2. Run: git add tests/unit/test_*.py"
+    echo "  3. Commit again"
+    echo ""
+    echo "To bypass (NOT RECOMMENDED):"
+    echo "  git commit --no-verify"
+    echo ""
+    exit 1
+else
+    echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo "${GREEN}✅ TDD Compliance Check Passed!${NC}"
+    echo "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 0
+fi

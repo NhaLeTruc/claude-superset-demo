@@ -194,7 +194,7 @@ docker exec goodnote-spark-dev pytest -m unit tests/
 ## Next Steps
 
 1. **Read TDD Spec**: `docs/TDD_SPEC.md`
-2. **Follow Task List**: `IMPLEMENTATION_TASKS.md`
+2. **Follow Task List**: `docs/IMPLEMENTATION_TASKS.md`
 3. **Run Tests**: `./docker/run-tests.sh`
 4. **Implement Functions**: Follow RED → GREEN → REFACTOR cycle
 

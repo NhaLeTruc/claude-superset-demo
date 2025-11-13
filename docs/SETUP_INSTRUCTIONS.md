@@ -132,7 +132,10 @@ claude-superset-demo/
 │   └── run-tests.sh             # Run tests
 ├── docker-compose.yml            # Services definition
 ├── requirements.txt              # Python dependencies
-└── DOCKER_QUICKSTART.md          # Detailed Docker guide
+└── docs/
+    ├── DOCKER_QUICKSTART.md      # Detailed Docker guide
+    ├── IMPLEMENTATION_TASKS.md   # 150+ task checklist
+    └── SETUP_INSTRUCTIONS.md     # This file
 ```
 
 ---
@@ -252,9 +255,9 @@ docker exec goodnote-spark-dev ls -la /app/tests
 
 ## 📖 Documentation
 
-- **Quick Start:** `DOCKER_QUICKSTART.md` (30-second setup)
+- **Quick Start:** `docs/DOCKER_QUICKSTART.md` (30-second setup)
 - **TDD Spec:** `docs/TDD_SPEC.md` (all function specifications)
-- **Task List:** `IMPLEMENTATION_TASKS.md` (150+ checkboxes)
+- **Task List:** `docs/IMPLEMENTATION_TASKS.md` (150+ checkboxes)
 - **Enforcement:** `docs/TDD_ENFORCEMENT_GUIDE.md` (how to ensure TDD)
 - **Session Rules:** `.claude/SESSION_RULES.md` (AI assistant rules)
 
@@ -310,4 +313,4 @@ docker exec -it goodnote-spark-dev bash
 
 **Everything is ready!** Just run on your local machine where Docker is installed. 🚀
 
-Need help? Check `DOCKER_QUICKSTART.md` for detailed troubleshooting.
+Need help? Check `docs/DOCKER_QUICKSTART.md` for detailed troubleshooting.

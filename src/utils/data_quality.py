@@ -7,6 +7,7 @@ Following TDD: Tests written first, implementation comes after RED state.
 from typing import Tuple, List
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
+from pyspark.sql import functions as F
 
 
 def validate_schema(
@@ -65,3 +66,57 @@ def validate_schema(
 
     is_valid = len(errors) == 0
     return is_valid, errors
+
+
+def detect_nulls(
+    df: DataFrame,
+    non_nullable_columns: List[str]
+) -> DataFrame:
+    """
+    Detect NULL values in specified columns.
+
+    Args:
+        df: DataFrame to check
+        non_nullable_columns: List of column names that should not have NULLs
+
+    Returns:
+        DataFrame with only rows containing NULLs in specified columns
+        Adds column: null_columns (ArrayType<StringType>) listing which columns are NULL
+
+    If no NULLs found, returns empty DataFrame with same schema
+    """
+    # Build filter condition: any of the specified columns is NULL
+    if not non_nullable_columns:
+        # No columns to check - return empty DataFrame
+        return df.limit(0).withColumn("null_columns", F.array())
+
+    # Create condition: col1.isNull() OR col2.isNull() OR ...
+    null_condition = None
+    for col_name in non_nullable_columns:
+        if null_condition is None:
+            null_condition = F.col(col_name).isNull()
+        else:
+            null_condition = null_condition | F.col(col_name).isNull()
+
+    # Filter rows that have at least one NULL
+    rows_with_nulls = df.filter(null_condition)
+
+    # Build null_columns array: list which columns are NULL for each row
+    # Using array() with when() to conditionally include column names
+    null_columns_expr = F.array(
+        *[
+            F.when(F.col(col_name).isNull(), F.lit(col_name))
+            for col_name in non_nullable_columns
+        ]
+    )
+
+    # Filter out None values from the array (columns that are NOT null)
+    null_columns_filtered = F.array_except(
+        null_columns_expr,
+        F.array(F.lit(None).cast("string"))
+    )
+
+    # Add the null_columns column
+    result_df = rows_with_nulls.withColumn("null_columns", null_columns_filtered)
+
+    return result_df

@@ -119,12 +119,12 @@ docker exec -it goodnote-postgres psql -U analytics_user -d analytics
 docker ps
 
 # View logs
-docker-compose logs spark-dev
+docker compose logs spark-dev
 
 # Rebuild from scratch
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ### Tests Not Found
@@ -156,16 +156,16 @@ sudo chown -R $USER:$USER .
 ./docker/start-dev.sh
 
 # Stop environment
-docker-compose down
+docker compose down
 
 # Stop and remove volumes
-docker-compose down -v
+docker compose down -v
 
 # View logs
-docker-compose logs -f spark-dev
+docker compose logs -f spark-dev
 
 # Rebuild after dependency changes
-docker-compose build spark-dev
+docker compose build spark-dev
 
 # Run tests
 ./docker/run-tests.sh

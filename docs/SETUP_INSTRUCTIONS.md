@@ -170,16 +170,16 @@ claude-superset-demo/
 ./docker/start-dev.sh
 
 # Stop environment
-docker-compose down
+docker compose down
 
 # View logs
-docker-compose logs -f spark-dev
+docker compose logs -f spark-dev
 
 # Enter Spark container
 docker exec -it goodnote-spark-dev bash
 
 # Restart after code changes (not needed - volumes auto-sync)
-docker-compose restart spark-dev
+docker compose restart spark-dev
 ```
 
 ### Testing
@@ -238,8 +238,8 @@ docker exec goodnote-spark-dev pytest --cov=src --cov-report=html
 **Problem:** "No module named 'pyspark'"
 ```bash
 # Solution: Rebuild Docker image
-docker-compose build --no-cache spark-dev
-docker-compose up -d
+docker compose build --no-cache spark-dev
+docker compose up -d
 ```
 
 **Problem:** "Tests not found"

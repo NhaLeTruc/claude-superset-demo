@@ -545,7 +545,7 @@ FEATURE_FLAGS = {
 ### Local Development (Docker Compose)
 
 ```yaml
-# docker-compose.yml
+# compose.yml
 version: '3.8'
 
 services:

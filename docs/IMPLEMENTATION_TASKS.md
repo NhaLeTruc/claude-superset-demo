@@ -330,7 +330,7 @@ This document provides a **complete task checklist** for implementing the GoodNo
 ## Phase 9: Docker & Environment (1 hour)
 
 ### Docker Compose
-**File:** `docker/docker-compose.yml`
+**File:** `docker/compose.yml`
 - [ ] Define Spark master service
 - [ ] Define Spark worker services (2x)
 - [ ] Define PostgreSQL service

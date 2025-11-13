@@ -42,7 +42,7 @@ This guide will help you set up the GoodNote Analytics Platform from scratch on 
 2. **Docker Compose** (2.x or higher)
    ```bash
    # Verify installation
-   docker-compose --version
+   docker compose version
    # Expected output: Docker Compose version 2.x.x
    ```
 
@@ -72,7 +72,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Install Docker Compose
+# Install Docker Compose Plugin
 sudo apt install docker-compose-plugin
 
 # Install Python 3.9+
@@ -121,10 +121,10 @@ git clone <repository-url>
 cd insight-engineer-challenge
 
 # 2. Start all services
-docker-compose up -d
+docker compose up -d
 
 # 3. Wait for services to be ready (2-3 minutes)
-docker-compose ps
+docker compose ps
 
 # 4. Generate sample data
 docker exec goodnote-spark-master python /opt/spark-apps/scripts/generate_data.py --interactions 100000 --metadata 10000
@@ -205,7 +205,7 @@ DATA_PROCESSED_PATH=/opt/spark-data/processed
 cd docker
 
 # Build all images
-docker-compose build
+docker compose build
 
 # Expected output:
 # Successfully built spark-master
@@ -219,10 +219,10 @@ This step may take 10-15 minutes depending on your internet speed.
 
 ```bash
 # Start all services in detached mode
-docker-compose up -d
+docker compose up -d
 
 # Verify all containers are running
-docker-compose ps
+docker compose ps
 
 # Expected output:
 # NAME                  STATUS    PORTS
@@ -526,8 +526,8 @@ docker logs goodnote-spark-master
 # - Permission issues: Ensure user is in docker group (sudo usermod -aG docker $USER)
 
 # Restart all services
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 #### Issue 2: Spark Job Fails with OOM Error
@@ -541,11 +541,11 @@ java.lang.OutOfMemoryError: Java heap space
 **Solutions:**
 ```bash
 # Increase executor memory
-docker-compose down
-# Edit docker-compose.yml:
+docker compose down
+# Edit compose.yml:
 # SPARK_WORKER_MEMORY=24G  # Increase from 16G
 # SPARK_EXECUTOR_MEMORY=24g
-docker-compose up -d
+docker compose up -d
 
 # Or reduce dataset size for testing
 docker exec goodnote-spark-master python /opt/spark-apps/scripts/generate_data.py \
@@ -569,7 +569,7 @@ docker exec goodnote-postgres pg_isready -U analytics_user
 docker logs goodnote-postgres
 
 # Restart PostgreSQL
-docker-compose restart postgres
+docker compose restart postgres
 
 # Wait 30 seconds and retry
 ```
@@ -610,8 +610,8 @@ docker port goodnote-spark-master
 # Should show: 8080/tcp -> 0.0.0.0:8080
 
 # If not mapped correctly, restart
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 
 # Check firewall (Linux)
 sudo ufw allow 8080/tcp
@@ -623,7 +623,7 @@ If you're still experiencing issues:
 
 1. **Check logs:**
    ```bash
-   docker-compose logs --tail=100 <service-name>
+   docker compose logs --tail=100 <service-name>
    ```
 
 2. **Review documentation:**
@@ -669,10 +669,10 @@ After successful setup:
 
 ```bash
 # Stop all containers
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (deletes all data!)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Remove Generated Data
@@ -690,7 +690,7 @@ rm -rf logs/*
 
 ```bash
 # Remove everything (containers, images, volumes, networks)
-docker-compose down -v --rmi all
+docker compose down -v --rmi all
 
 # Remove data directory
 rm -rf data/

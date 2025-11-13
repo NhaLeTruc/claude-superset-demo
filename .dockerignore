@@ -43,5 +43,6 @@ logs/
 *.log
 
 # Docker
+compose.yml
 docker-compose.yml
 .dockerignore

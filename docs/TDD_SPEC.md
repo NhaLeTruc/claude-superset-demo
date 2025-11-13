@@ -1993,7 +1993,7 @@ pytest tests/unit/test_engagement_transforms.py -v
 pytest tests/unit --cov=src --cov-report=html
 
 # Run integration tests (requires Docker)
-docker-compose up -d
+docker compose up -d
 pytest tests/integration -v
 ```
 

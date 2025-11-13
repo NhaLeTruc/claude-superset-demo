@@ -11,6 +11,8 @@ This repository contains a comprehensive implementation plan for the **GoodNote 
 - ⚡ **Optimized for Scale:** Handles TB-scale data with advanced Spark optimizations
 - 🧪 **Production-Ready:** Complete with tests, monitoring, and error handling
 
+**🚀 Quick Start:** See [docs/SETUP_INSTRUCTIONS.md](./docs/SETUP_INSTRUCTIONS.md) for step-by-step setup
+
 ---
 
 ## 📁 Repository Contents
@@ -18,6 +20,8 @@ This repository contains a comprehensive implementation plan for the **GoodNote 
 This branch contains **comprehensive documentation** for implementing the GoodNote challenge:
 
 ### Core Documentation
+
+**📖 Note:** All documentation files are in `docs/` per our [Documentation Policy](./docs/DOCUMENTATION_POLICY.md)
 
 1. **[TDD_SPEC.md](./docs/TDD_SPEC.md)** 🔴🟢 **NEW - Start Here for Implementation!**
    - **Complete Test-Driven Development specifications**
@@ -70,6 +74,29 @@ This branch contains **comprehensive documentation** for implementing the GoodNo
    - Dataset descriptions
    - Task definitions (1-6)
    - Evaluation criteria
+
+9. **[IMPLEMENTATION_TASKS.md](./docs/IMPLEMENTATION_TASKS.md)** 📋 **Complete Task Checklist**
+   - 150+ checkboxes covering all implementation tasks
+   - Organized into 12 phases
+   - Estimated time per phase
+   - Verification checklist
+
+10. **[SETUP_INSTRUCTIONS.md](./docs/SETUP_INSTRUCTIONS.md)** 🐳 **Docker Setup Guide**
+   - Step-by-step local machine setup
+   - Prerequisites and installation
+   - TDD workflow examples
+   - Troubleshooting guide
+
+11. **[DOCKER_QUICKSTART.md](./docs/DOCKER_QUICKSTART.md)** ⚡ **Quick Docker Reference**
+   - 30-second quickstart
+   - Common commands
+   - Development workflow
+   - Advanced usage
+
+12. **[DOCUMENTATION_POLICY.md](./docs/DOCUMENTATION_POLICY.md)** 📜 **Documentation Rules**
+   - All .md files must be in docs/
+   - Enforced by git hooks
+   - Organization standards
 
 ---
 

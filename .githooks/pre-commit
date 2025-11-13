@@ -71,6 +71,26 @@ if [ -n "$TEST_FILES" ]; then
     echo "$TEST_FILES"
 fi
 
+# Check for .md files in root (except README.md)
+echo ""
+echo "${GREEN}📄 Checking documentation policy...${NC}"
+ROOT_MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^[^/]+\.md$' | grep -v '^README\.md$')
+
+if [ -n "$ROOT_MD_FILES" ]; then
+    echo "${RED}❌ POLICY VIOLATION: Markdown files must be in docs/ directory${NC}"
+    echo "${YELLOW}Found in root:${NC}"
+    echo "$ROOT_MD_FILES"
+    echo ""
+    echo "${YELLOW}Fix:${NC}"
+    echo "  git mv <file>.md docs/"
+    echo "  git add docs/<file>.md"
+    echo ""
+    echo "${YELLOW}See docs/DOCUMENTATION_POLICY.md for details${NC}"
+    VIOLATIONS=$((VIOLATIONS + 1))
+else
+    echo "${GREEN}✅ Documentation policy check passed${NC}"
+fi
+
 # Final verdict
 echo ""
 if [ $VIOLATIONS -gt 0 ]; then

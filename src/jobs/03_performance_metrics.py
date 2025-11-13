@@ -26,7 +26,7 @@ from src.config.database_config import write_to_postgres
 from src.transforms.performance_transforms import (
     calculate_percentiles,
     calculate_device_correlation,
-    detect_anomalies
+    detect_anomalies_statistical
 )
 
 
@@ -117,7 +117,7 @@ def compute_performance_metrics(enriched_df: DataFrame) -> dict:
 
     # 3. Statistical Anomaly Detection
     print("\n📊 Detecting Performance Anomalies...")
-    anomalies_df = detect_anomalies(
+    anomalies_df = detect_anomalies_statistical(
         df=enriched_df,
         value_column="duration_ms",
         z_threshold=3.0,
@@ -125,12 +125,15 @@ def compute_performance_metrics(enriched_df: DataFrame) -> dict:
     )
 
     if anomalies_df.count() > 0:
+        # Rename duration_ms to metric_value for database schema
+        anomalies_df = anomalies_df.withColumnRenamed("duration_ms", "metric_value")
+
         # Enrich anomalies with severity classification
         anomalies_df = anomalies_df.withColumn(
             "severity",
-            F.when(F.col("z_score") >= 4.0, "critical")
-             .when(F.col("z_score") >= 3.5, "high")
-             .when(F.col("z_score") >= 3.0, "medium")
+            F.when(F.abs(F.col("z_score")) >= 4.0, "critical")
+             .when(F.abs(F.col("z_score")) >= 3.5, "high")
+             .when(F.abs(F.col("z_score")) >= 3.0, "medium")
              .otherwise("low")
         )
 
@@ -141,15 +144,17 @@ def compute_performance_metrics(enriched_df: DataFrame) -> dict:
             .withColumn(
                 "description",
                 F.concat(
-                    F.lit("High latency detected for "),
+                    F.lit("Performance anomaly detected for "),
                     F.col("app_version"),
                     F.lit(" on "),
                     F.col("metric_date").cast("string"),
                     F.lit(": "),
                     F.round("metric_value", 2).cast("string"),
                     F.lit("ms ("),
-                    F.round("z_score", 2).cast("string"),
-                    F.lit(" std deviations)")
+                    F.round(F.abs("z_score"), 2).cast("string"),
+                    F.lit(" std deviations, "),
+                    F.col("anomaly_type"),
+                    F.lit(")")
                 )
             )
 

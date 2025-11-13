@@ -1,6 +1,91 @@
 version: '3.8'
 
 services:
+  # =================================================================
+  # Apache Spark Cluster
+  # =================================================================
+
+  # Spark Master Node
+  spark-master:
+    image: bitnami/spark:3.5.0
+    container_name: ${CONTAINER_SPARK_MASTER:-goodnote-spark-master}
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT:-8080}
+    ports:
+      - "${SPARK_MASTER_PORT:-7077}:7077"
+      - "${SPARK_MASTER_WEBUI_PORT:-8080}:8080"
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./database:/app/database
+      - ./requirements.txt:/app/requirements.txt
+    networks:
+      - goodnote-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Spark Worker Node 1
+  spark-worker-1:
+    image: bitnami/spark:3.5.0
+    container_name: ${CONTAINER_SPARK_WORKER_1:-goodnote-spark-worker-1}
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY:-2g}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES:-2}
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - spark_work_1:/opt/bitnami/spark/work
+    networks:
+      - goodnote-network
+    depends_on:
+      - spark-master
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Spark Worker Node 2
+  spark-worker-2:
+    image: bitnami/spark:3.5.0
+    container_name: ${CONTAINER_SPARK_WORKER_2:-goodnote-spark-worker-2}
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY:-2g}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES:-2}
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - spark_work_2:/opt/bitnami/spark/work
+    networks:
+      - goodnote-network
+    depends_on:
+      - spark-master
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Spark development environment for running tests
   spark-dev:
     build:
@@ -16,30 +101,134 @@ services:
     environment:
       - SPARK_MODE=local
       - PYTHONPATH=/app
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB:-analytics}
+      - POSTGRES_USER=${POSTGRES_USER:-analytics_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-analytics_pass}
     working_dir: /app
     stdin_open: true
     tty: true
     command: tail -f /dev/null  # Keep container running
+    networks:
+      - goodnote-network
+    depends_on:
+      - postgres
 
-  # PostgreSQL database for analytics
+  # =================================================================
+  # PostgreSQL Database
+  # =================================================================
+
   postgres:
     image: postgres:15-alpine
-    container_name: goodnote-postgres
+    container_name: ${CONTAINER_POSTGRES:-goodnote-postgres}
     environment:
-      POSTGRES_DB: analytics
-      POSTGRES_USER: analytics_user
-      POSTGRES_PASSWORD: analytics_pass
+      POSTGRES_DB: ${POSTGRES_DB:-analytics}
+      POSTGRES_USER: ${POSTGRES_USER:-analytics_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-analytics_pass}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - goodnote-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U analytics_user -d analytics"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-analytics_user} -d ${POSTGRES_DB:-analytics}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # =================================================================
+  # Redis Cache (for Superset)
+  # =================================================================
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${CONTAINER_REDIS:-goodnote-redis}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - goodnote-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # =================================================================
+  # Apache Superset (Business Intelligence & Dashboards)
+  # =================================================================
+
+  superset:
+    image: apache/superset:latest
+    container_name: ${CONTAINER_SUPERSET:-goodnote-superset}
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-CHANGE_THIS_SECRET_KEY}
+      - SUPERSET_LOAD_EXAMPLES=${SUPERSET_LOAD_EXAMPLES:-no}
+      - DATABASE_DB=${POSTGRES_DB:-analytics}
+      - DATABASE_HOST=${POSTGRES_HOST:-postgres}
+      - DATABASE_PASSWORD=${POSTGRES_PASSWORD:-analytics_pass}
+      - DATABASE_USER=${POSTGRES_USER:-analytics_user}
+      - DATABASE_PORT=${POSTGRES_PORT:-5432}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - PYTHONPATH=/app/pythonpath
+    ports:
+      - "${SUPERSET_WEBSERVER_PORT:-8088}:8088"
+    volumes:
+      - ./superset:/app/superset_home
+      - superset_home:/app/superset_home
+    networks:
+      - goodnote-network
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Initialize Superset on first run
+    command: >
+      sh -c "
+      superset db upgrade &&
+      superset fab create-admin \
+        --username ${SUPERSET_ADMIN_USERNAME:-admin} \
+        --firstname ${SUPERSET_ADMIN_FIRSTNAME:-Admin} \
+        --lastname ${SUPERSET_ADMIN_LASTNAME:-User} \
+        --email ${SUPERSET_ADMIN_EMAIL:-admin@example.com} \
+        --password ${SUPERSET_ADMIN_PASSWORD:-admin} || true &&
+      superset init &&
+      superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger
+      "
+
+# =================================================================
+# Networks
+# =================================================================
+
+networks:
+  goodnote-network:
+    name: ${NETWORK_NAME:-goodnote-network}
+    driver: bridge
+
+# =================================================================
+# Volumes
+# =================================================================
+
 volumes:
   postgres_data:
+    name: ${VOLUME_POSTGRES_DATA:-postgres_data}
+    driver: local
+  redis_data:
+    name: ${VOLUME_REDIS_DATA:-redis_data}
+    driver: local
+  spark_work_1:
+    driver: local
+  spark_work_2:
+    driver: local
+  superset_home:
     driver: local

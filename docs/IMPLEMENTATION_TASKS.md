@@ -31,6 +31,9 @@ This document provides a **complete task checklist** for implementing the GoodNo
 - **Phase 11:** Optimization & Analysis (70% - framework complete, execution pending) ⭐ NEW
 - **Phase 12:** Documentation & Reporting (85% - comprehensive report + optimization framework complete)
 
+### ❌ Optional / Not Implemented
+- **Phase 13:** Monitoring & Custom Accumulators (0% - optional enhancement, not prioritized)
+
 ### 📊 Test Status
 - **Unit Tests Written:** 59+ tests (all core transforms)
 - **Test Coverage:** >80% target set
@@ -607,6 +610,70 @@ python scripts/generate_sample_data.py --medium --seed 42
 
 ---
 
+## Phase 13: Monitoring & Custom Accumulators (OPTIONAL - 2-3 hours) ❌ 0% Complete
+
+**Status:** Optional enhancement - Not implemented (deprioritized)
+
+This phase is based on Task 6 from IMPLEMENTATION_PLAN.md. The project uses print-based logging as an alternative.
+
+### Task 13.1: Custom Accumulators Implementation
+**Module:** `src/utils/monitoring.py` (not created)
+- [ ] Create monitoring utility module
+- [ ] Implement `record_counter` accumulator
+  - Tracks total records processed across all partitions
+- [ ] Implement `skipped_records` accumulator
+  - Counts outliers and records filtered out
+- [ ] Implement `data_quality_errors` accumulator
+  - Tracks validation failures (negative durations, invalid types, etc.)
+- [ ] Implement `partition_skew_detector` accumulator
+  - Tracks max/min partition sizes to detect imbalance
+
+### Task 13.2: Integration with Spark Jobs
+**Files:** All jobs in `src/jobs/`
+- [ ] Add accumulator initialization to job entry points
+- [ ] Integrate accumulators into data processing logic
+- [ ] Add tracking to `01_data_processing.py`
+- [ ] Add tracking to `02_user_engagement.py`
+- [ ] Add tracking to `03_performance_metrics.py`
+- [ ] Add tracking to `04_session_analysis.py`
+
+### Task 13.3: Monitoring Output & Logging
+- [ ] Create accumulator value logger
+- [ ] Format monitoring output for readability
+- [ ] Add monitoring summary to job completion logs
+- [ ] Optional: Export metrics to monitoring dashboard
+
+### Current Alternative Implementation ✅
+- [x] Print-based logging in all jobs
+- [x] Data quality validation functions (in `data_quality.py`)
+- [x] NULL detection and outlier identification
+- [x] Job progress indicators with emoji status
+
+**Example Output (Current Implementation):**
+```
+📖 Reading interactions from: /data/raw/interactions
+   ✅ Loaded 1,000,000 interactions
+🔍 Validating input data quality...
+   ✅ Data validation complete
+🔗 Enriching interactions with user metadata...
+   ⚠️  Found 150 hot keys (top 1% users)
+   🧂 Applying salting strategy...
+   ✅ Enriched 995,000 interactions
+```
+
+**Why Not Implemented:**
+1. Print-based logging already provides sufficient visibility
+2. Accumulators add complexity for marginal benefit in this use case
+3. Time better spent on core analytics and optimization
+4. Can be added later if detailed runtime metrics are needed
+
+**If Implementing Later:**
+- Estimated time: 2-3 hours
+- Priority: Low (nice-to-have for production monitoring)
+- Dependencies: None (standalone enhancement)
+
+---
+
 ## Final Verification Checklist
 
 ### Tests & Coverage
@@ -661,8 +728,9 @@ python scripts/generate_sample_data.py --medium --seed 42
 - ⚠️ Dashboards: 2.5 hours (SPECS COMPLETE - 50%)
 - ⚠️ Optimization: 1.5 hours (FRAMEWORK COMPLETE - 70%) ⭐
 - ✅ Documentation: 2 hours (COMPLETE - 80%) ⭐
+- ❌ Monitoring (Optional): 0 hours (NOT IMPLEMENTED - deprioritized)
 - **Time Invested: ~22.5 hours**
-- **Time Remaining: ~9-13 hours**
+- **Time Remaining: ~9-13 hours (excluding optional Phase 13)**
 
 **Success Criteria Status:**
 - ✅ All tests pass with >80% coverage (ACHIEVED for unit tests)

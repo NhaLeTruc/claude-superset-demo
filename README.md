@@ -252,9 +252,10 @@ The challenge consists of 6 main tasks. Current completion status:
   - Document actual bottlenecks with before/after metrics
   - Validate 30-60% performance improvements
 
-### ⚙️ Task 6: Monitoring (Optional - Not Implemented)
-- **Status:** Optional task, not prioritized
-- **Alternative:** Comprehensive logging implemented in all jobs
+### ⚙️ Task 6: Monitoring & Custom Accumulators (Optional - Not Implemented)
+- **Status:** Optional task, not prioritized (see Phase 13 in IMPLEMENTATION_TASKS.md)
+- **Alternative:** Print-based logging with emoji status indicators in all jobs
+- **Details:** See [IMPLEMENTATION_TASKS.md - Phase 13](./docs/IMPLEMENTATION_TASKS.md#phase-13-monitoring--custom-accumulators-optional---2-3-hours--0-complete) for full specification
 
 ---
 

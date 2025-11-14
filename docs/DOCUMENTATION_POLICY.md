@@ -27,10 +27,8 @@ claude-superset-demo/
 │   ├── IMPLEMENTATION_TASKS.md
 │   ├── ARCHITECTURE.md
 │   ├── PROJECT_STRUCTURE.md
-│   ├── SETUP_GUIDE.md
-│   ├── SUPERSET_DASHBOARDS.md
-│   ├── DOCKER_QUICKSTART.md
-│   └── SETUP_INSTRUCTIONS.md
+│   ├── SETUP_GUIDE.md                 # Troubleshooting guide
+│   └── SUPERSET_DASHBOARDS.md         # Dashboard specifications
 └── challenge/
     └── TheChallenge.md            ✅ Subdirectory OK
 ```

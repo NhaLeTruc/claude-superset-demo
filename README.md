@@ -13,7 +13,7 @@ This repository contains a **95% complete implementation** of the **GoodNote Dat
 
 **📊 Current Status:** ~95% Complete | **🎯 Remaining:** Spark UI analysis execution, Superset UI implementation, Integration tests
 
-**🚀 Quick Start:** See [docs/SETUP_INSTRUCTIONS.md](./docs/SETUP_INSTRUCTIONS.md) for step-by-step setup
+**🚀 Quick Start:** See [Makefile](#-quick-start) below or `make help` for all commands
 
 ---
 
@@ -94,11 +94,11 @@ This branch contains **comprehensive documentation** for implementing the GoodNo
    - Code organization principles
    - Getting started guide
 
-6. **[SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)**
-   - Prerequisites and system requirements
-   - Quick start (5 minutes)
-   - Detailed setup instructions
-   - Troubleshooting common issues
+6. **[SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)** 🔧 **Troubleshooting Guide**
+   - Prerequisites and installation
+   - Common Makefile commands reference
+   - 10 common issues with solutions
+   - Service health checks and debugging
 
 7. **[SUPERSET_DASHBOARDS.md](./docs/SUPERSET_DASHBOARDS.md)**
    - 4 interactive dashboard designs
@@ -118,19 +118,7 @@ This branch contains **comprehensive documentation** for implementing the GoodNo
    - Estimated time per phase
    - Verification checklist
 
-10. **[SETUP_INSTRUCTIONS.md](./docs/SETUP_INSTRUCTIONS.md)** 🐳 **Docker Setup Guide**
-   - Step-by-step local machine setup
-   - Prerequisites and installation
-   - TDD workflow examples
-   - Troubleshooting guide
-
-11. **[DOCKER_QUICKSTART.md](./docs/DOCKER_QUICKSTART.md)** ⚡ **Quick Docker Reference**
-   - 30-second quickstart
-   - Common commands
-   - Development workflow
-   - Advanced usage
-
-12. **[DOCUMENTATION_POLICY.md](./docs/DOCUMENTATION_POLICY.md)** 📜 **Documentation Rules**
+10. **[DOCUMENTATION_POLICY.md](./docs/DOCUMENTATION_POLICY.md)** 📜 **Documentation Rules**
    - All .md files must be in docs/
    - Enforced by git hooks
    - Organization standards
@@ -451,7 +439,7 @@ claude-superset-demo/
 │   ├── IMPLEMENTATION_PLAN.md         → Comprehensive implementation guide
 │   ├── ARCHITECTURE.md                → System architecture and design
 │   ├── PROJECT_STRUCTURE.md           → Directory organization
-│   ├── SETUP_GUIDE.md                 → Installation and setup
+│   ├── SETUP_GUIDE.md                 → Troubleshooting and quick reference
 │   └── SUPERSET_DASHBOARDS.md         → Dashboard specifications
 └── challenge/
     └── TheChallenge.md                → Original challenge requirements
@@ -633,7 +621,7 @@ docker exec goodnote-spark-master /opt/spark-apps/scripts/run_all_jobs.sh
 docker exec goodnote-superset superset cache-clear
 ```
 
-See [SETUP_GUIDE.md](./SETUP_GUIDE.md#troubleshooting) for comprehensive troubleshooting.
+See [SETUP_GUIDE.md](./docs/SETUP_GUIDE.md#troubleshooting) for comprehensive troubleshooting.
 
 ---
 
@@ -742,10 +730,10 @@ pytest tests/integration -v
 ## 📞 Support
 
 For questions or issues:
-1. Check [TROUBLESHOOTING](./SETUP_GUIDE.md#troubleshooting) section
-2. Review existing documentation
-3. Search Stack Overflow
-4. Open GitHub issue (if applicable)
+1. Check [SETUP_GUIDE.md](./docs/SETUP_GUIDE.md#troubleshooting) for troubleshooting
+2. Run `make help` for all available commands
+3. Review existing documentation in `docs/`
+4. Search Stack Overflow or open GitHub issue
 
 ---
 

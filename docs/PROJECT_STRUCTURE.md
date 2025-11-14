@@ -162,7 +162,7 @@ insight-engineer-challenge/
 │
 ├── docs/                              # Documentation
 │   ├── REPORT.md                      # Comprehensive technical report
-│   ├── SETUP_GUIDE.md                 # Setup and installation guide
+│   ├── SETUP_GUIDE.md                 # Troubleshooting and quick reference
 │   ├── SUPERSET_GUIDE.md              # Superset dashboard user guide
 │   ├── OPTIMIZATION_REPORT.md         # Spark optimization analysis
 │   ├── API_REFERENCE.md               # Code API documentation
@@ -752,7 +752,7 @@ python scripts/generate_data.py
 
 1. Review [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for detailed task breakdown
 2. Review [ARCHITECTURE.md](./ARCHITECTURE.md) for system design
-3. Follow [SETUP_GUIDE.md](./docs/SETUP_GUIDE.md) for installation
+3. Run `make quickstart` or see [SETUP_GUIDE.md](./SETUP_GUIDE.md) for troubleshooting
 4. Refer to [API_REFERENCE.md](./docs/API_REFERENCE.md) for code documentation
 
 ---

@@ -1,4 +1,4 @@
-# GoodNote Data Engineering Challenge - Implementation
+# SuperSet Pipeline Demo
 
 **A production-grade Apache Spark analytics platform for processing 1TB+ user interaction data.**
 
@@ -19,22 +19,34 @@ make quickstart
 make test              # Run 59+ unit tests
 make status            # Check services
 make db-tables         # View database tables
+
+# Common Commands
+make quickstart        # Complete setup
+make test-coverage     # Generate coverage report
+make generate-data     # Create sample data
+make run-jobs          # Execute all ETL jobs
+make db-connect        # Connect to PostgreSQL
+make logs              # View service logs
+make help              # Show all 50+ commands
 ```
 
 **Access Points:**
-- Spark Master UI: http://localhost:8080
-- Spark App UI: http://localhost:4040
-- Superset: http://localhost:8088 (admin/admin)
-- Jupyter: http://localhost:8888
+
+- Spark Master UI: <http://localhost:8080>
+- Spark App UI: <http://localhost:4040>
+- Superset: <http://localhost:8088> (admin/admin)
+- Jupyter: <http://localhost:8888>
 - PostgreSQL: localhost:5432 (postgres/postgres)
 
 **See:** [DEVELOPMENT_GUIDE.md](./docs/DEVELOPMENT_GUIDE.md) for detailed setup
+
+**See:** [TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) for detailed testing strategy
 
 ---
 
 ## 📁 Project Structure
 
-```
+```txt
 claude-superset-demo/
 ├── src/                    # Source code (23 functions, 1,200+ lines of jobs)
 ├── tests/                  # Test suite (59+ unit tests, 5 modules)
@@ -51,6 +63,7 @@ claude-superset-demo/
 ## 📊 Status Summary
 
 ### Completed (100%)
+
 - ✅ **Core Functions:** 23 transform functions with 59+ unit tests
 - ✅ **ETL Jobs:** 4 production Spark jobs (data processing, engagement, performance, sessions)
 - ✅ **Database:** 13 PostgreSQL tables with indexes
@@ -58,6 +71,7 @@ claude-superset-demo/
 - ✅ **Documentation:** 10+ comprehensive guides
 
 ### Remaining (9-13 hours)
+
 - ⚠️ **Spark UI Analysis** (4-6 hours) - Execute and document optimization results
 - ⚠️ **Superset UI** (2-3 hours) - Implement 4 dashboards (specs ready)
 - ⚠️ **Integration Tests** (3-4 hours) - End-to-end pipeline testing
@@ -69,17 +83,20 @@ claude-superset-demo/
 ## 📖 Documentation
 
 **Quick Reference:**
+
 - **[Makefile](./Makefile)** - Run `make help` for all commands
 - **[SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)** - Installation & troubleshooting
 - **[DEVELOPMENT_GUIDE.md](./docs/DEVELOPMENT_GUIDE.md)** - Developer workflow
 - **[TESTING_GUIDE.md](./docs/TESTING_GUIDE.md)** - Testing strategy
 
 **Implementation:**
+
 - **[IMPLEMENTATION_TASKS.md](./docs/IMPLEMENTATION_TASKS.md)** - Complete checklist (95% done)
 - **[TDD_SPEC.md](./docs/TDD_SPEC.md)** - Test specifications
 - **[OPTIMIZATION_GUIDE.md](./docs/OPTIMIZATION_GUIDE.md)** - 7 Spark optimizations
 
 **Architecture:**
+
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - System diagrams & design
 - **[SUPERSET_DASHBOARDS.md](./docs/SUPERSET_DASHBOARDS.md)** - Dashboard specs
 - **[TheChallenge.md](./challenge/TheChallenge.md)** - Original requirements
@@ -101,20 +118,19 @@ claude-superset-demo/
 
 ---
 
-## 🛠️ Common Commands
+## ⚡ Optimizations
 
-```bash
-make quickstart        # Complete setup
-make test              # Run all tests
-make test-coverage     # Generate coverage report
-make generate-data     # Create sample data
-make run-jobs          # Execute all ETL jobs
-make db-connect        # Connect to PostgreSQL
-make logs              # View service logs
-make help              # Show all 50+ commands
-```
+7 major techniques implemented for 30-60% performance improvement:
 
-**See:** [DEVELOPMENT_GUIDE.md](./docs/DEVELOPMENT_GUIDE.md) for complete workflow
+- Broadcast joins
+- Salting for skew
+- AQE
+- Predicate pushdown
+- Column pruning
+- Optimal partitioning
+- Efficient caching
+
+**See:** [OPTIMIZATION_GUIDE.md](./docs/OPTIMIZATION_GUIDE.md) for implementation details
 
 ---
 
@@ -127,30 +143,6 @@ make help              # Show all 50+ commands
 **Monitoring:** Spark UI (ports 8080, 4040, 18080)
 
 **See:** [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for detailed diagrams
-
----
-
-## ⚡ Optimizations
-
-7 major techniques implemented for 30-60% performance improvement:
-1. Broadcast joins, 2. Salting for skew, 3. AQE, 4. Predicate pushdown, 5. Column pruning, 6. Optimal partitioning, 7. Efficient caching
-
-**See:** [OPTIMIZATION_GUIDE.md](./docs/OPTIMIZATION_GUIDE.md) for implementation details
-
----
-
-## 🧪 Testing
-
-- **59+ unit tests** across 5 modules (>80% coverage)
-- **TDD enforced** via git pre-commit hooks
-- **Framework:** pytest + chispa for PySpark
-
-```bash
-make test              # Run all tests
-make test-coverage     # With coverage report
-```
-
-**See:** [TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) for detailed testing strategy
 
 ---
 

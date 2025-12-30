@@ -170,9 +170,11 @@ def optimized_join(
     large_df: DataFrame,
     small_df: DataFrame,
     join_key: str,
+    hot_keys_df: DataFrame = None,
     join_type: str = "inner",
     enable_broadcast: bool = True,
     enable_salting: bool = True,
+    broadcast_threshold_mb: int = None,
     skew_threshold: float = 0.99,
     salt_factor: int = 10
 ) -> DataFrame:
@@ -181,7 +183,7 @@ def optimized_join(
 
     Strategy:
         1. If small_df fits broadcast threshold -> broadcast join
-        2. Else, detect hot keys in large_df
+        2. Else, detect hot keys in large_df (or use provided hot_keys_df)
         3. If hot keys found -> apply salting
         4. Perform join on salted keys
         5. Clean up salt columns
@@ -190,9 +192,11 @@ def optimized_join(
         large_df: Large DataFrame (e.g., interactions)
         small_df: Small DataFrame (e.g., metadata)
         join_key: Column to join on
+        hot_keys_df: Optional pre-computed hot keys DataFrame (output from identify_hot_keys)
         join_type: "inner", "left", "right", "outer"
         enable_broadcast: Try broadcast join if possible
         enable_salting: Apply salting if skew detected
+        broadcast_threshold_mb: Broadcast threshold in MB (not used, kept for compatibility)
         skew_threshold: Percentile threshold for hot key detection
         salt_factor: Number of salt buckets
 
@@ -208,6 +212,25 @@ def optimized_join(
     if join_key not in small_df.columns:
         raise ValueError(f"Column '{join_key}' not found in small DataFrame")
 
+    # If hot_keys_df is explicitly provided, always use salting
+    if hot_keys_df is not None and enable_salting:
+        # If hot keys found, apply salting
+        if hot_keys_df.count() > 0:
+            # Apply salting to large_df
+            large_salted = apply_salting(large_df, hot_keys_df, key_column=join_key, salt_factor=salt_factor)
+
+            # Explode small_df to match salted keys
+            small_exploded = explode_for_salting(small_df, hot_keys_df, key_column=join_key, salt_factor=salt_factor)
+
+            # Join on salted keys
+            salted_key = f"{join_key}_salted"
+            result_df = large_salted.join(small_exploded, on=salted_key, how=join_type)
+
+            # Clean up salt columns
+            result_df = result_df.drop("salt", salted_key)
+
+            return result_df
+
     # Strategy 1: Try broadcast join if enabled
     if enable_broadcast:
         # Simply use broadcast hint - Spark will use it if small_df is small enough
@@ -217,15 +240,15 @@ def optimized_join(
     # Strategy 2: Check for skew and apply salting if needed
     if enable_salting:
         # Detect hot keys in large_df
-        hot_keys_df = identify_hot_keys(large_df, key_column=join_key, threshold_percentile=skew_threshold)
+        detected_hot_keys = identify_hot_keys(large_df, key_column=join_key, threshold_percentile=skew_threshold)
 
         # If hot keys found, apply salting
-        if hot_keys_df.count() > 0:
+        if detected_hot_keys.count() > 0:
             # Apply salting to large_df
-            large_salted = apply_salting(large_df, hot_keys_df, key_column=join_key, salt_factor=salt_factor)
+            large_salted = apply_salting(large_df, detected_hot_keys, key_column=join_key, salt_factor=salt_factor)
 
             # Explode small_df to match salted keys
-            small_exploded = explode_for_salting(small_df, hot_keys_df, key_column=join_key, salt_factor=salt_factor)
+            small_exploded = explode_for_salting(small_df, detected_hot_keys, key_column=join_key, salt_factor=salt_factor)
 
             # Join on salted keys
             salted_key = f"{join_key}_salted"

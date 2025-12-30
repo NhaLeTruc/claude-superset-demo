@@ -13,6 +13,7 @@
 
 # Clone and start (one command)
 git clone <repo-url> && cd claude-superset-demo
+cp .env.example .env
 make quickstart
 
 # Verify

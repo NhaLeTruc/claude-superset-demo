@@ -195,16 +195,16 @@ class TestDataProcessingJob:
             df.filter(F.col("duration_ms").isNotNull()),
             "duration_ms",
             method="threshold",
-            min_value=0,
-            max_value=10000
+            threshold_min=0,
+            threshold_max=10000
         )
 
         outlier_count = outliers.count()
-        assert outlier_count == 1, f"Should detect 1 outlier, found {outlier_count}"
+        assert outlier_count == 2, f"Should detect 2 outliers, found {outlier_count}"
 
-        # Verify the outlier is the 999999 value
-        outlier_values = outliers.select("duration_ms").collect()
-        assert outlier_values[0]["duration_ms"] == 999999
+        # Verify the outliers are the -50 and 999999 values
+        outlier_values = sorted([row["duration_ms"] for row in outliers.select("duration_ms").collect()])
+        assert outlier_values == [-50, 999999], f"Expected [-50, 999999], got {outlier_values}"
 
     def test_partitioned_output(self, spark, test_data_paths,
                                sample_interactions_data, sample_metadata_data):

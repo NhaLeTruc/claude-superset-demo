@@ -30,7 +30,7 @@ def calculate_dau(interactions_df: DataFrame) -> DataFrame:
 
     # Group by date and calculate metrics
     dau_df = df_with_date.groupBy("date").agg(
-        F.countDistinct("user_id").alias("dau"),
+        F.countDistinct("user_id").alias("daily_active_users"),
         F.count("*").alias("total_interactions"),
         F.sum("duration_ms").alias("total_duration_ms")
     )
@@ -38,7 +38,7 @@ def calculate_dau(interactions_df: DataFrame) -> DataFrame:
     # Calculate avg_duration_per_user
     dau_df = dau_df.withColumn(
         "avg_duration_per_user",
-        (F.col("total_duration_ms") / F.col("dau")).cast("double")
+        (F.col("total_duration_ms") / F.col("daily_active_users")).cast("double")
     )
 
     return dau_df
@@ -68,7 +68,7 @@ def calculate_mau(interactions_df: DataFrame) -> DataFrame:
 
     # Group by month and calculate MAU
     mau_df = df_with_month.groupBy("month").agg(
-        F.countDistinct("user_id").alias("mau"),
+        F.countDistinct("user_id").alias("monthly_active_users"),
         F.count("*").alias("total_interactions")
     )
 
@@ -91,7 +91,7 @@ def calculate_stickiness(dau_df: DataFrame, mau_df: DataFrame) -> DataFrame:
 
     # Calculate average DAU per month
     avg_dau_per_month = dau_with_month.groupBy("month").agg(
-        F.avg("dau").alias("avg_dau")
+        F.avg("daily_active_users").alias("avg_dau")
     )
 
     # Join with MAU
@@ -100,10 +100,10 @@ def calculate_stickiness(dau_df: DataFrame, mau_df: DataFrame) -> DataFrame:
     # Calculate stickiness ratio
     stickiness_df = stickiness_df.withColumn(
         "stickiness_ratio",
-        (F.col("avg_dau") / F.col("mau")).cast("double")
+        (F.col("avg_dau") / F.col("monthly_active_users")).cast("double")
     )
 
-    return stickiness_df.select("month", "avg_dau", "mau", "stickiness_ratio")
+    return stickiness_df.select("month", "avg_dau", "monthly_active_users", "stickiness_ratio")
 
 
 def identify_power_users(

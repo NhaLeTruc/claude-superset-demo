@@ -27,8 +27,8 @@ class TestCalculatePercentiles:
             - app_version=1.0.0 with durations: [1000, 2000, 3000, 4000, 5000] ms
         WHEN: calculate_percentiles() with percentiles=[0.50, 0.95]
         THEN:
-            - p50_duration_ms ≈ 3000 (median)
-            - p95_duration_ms ≈ 4900 (95th percentile)
+            - p50 ≈ 3000 (median)
+            - p95 ≈ 4900 (95th percentile)
             - count = 5
         """
         # Arrange
@@ -57,8 +57,8 @@ class TestCalculatePercentiles:
         # Assert
         result = result_df.collect()[0]
         assert result["app_version"] == "1.0.0"
-        assert abs(result["p50_duration_ms"] - 3000) < 100  # Within 100ms
-        assert abs(result["p95_duration_ms"] - 4900) < 200  # Within 200ms
+        assert abs(result["p50"] - 3000) < 100  # Within 100ms
+        assert abs(result["p95"] - 4900) < 200  # Within 200ms
         assert result["count"] == 5
         assert "avg_duration_ms" in result_df.columns
         assert "stddev_duration_ms" in result_df.columns
@@ -112,13 +112,13 @@ class TestCalculatePercentiles:
         results = result_df.collect()
         for row in results:
             if row["app_version"] == "1.0.0" and row["date"] == date(2023, 1, 1):
-                assert abs(row["p50_duration_ms"] - 2000) < 100
+                assert abs(row["p50"] - 2000) < 100
                 assert row["count"] == 3
             elif row["app_version"] == "1.0.0" and row["date"] == date(2023, 1, 2):
-                assert abs(row["p50_duration_ms"] - 5000) < 100
+                assert abs(row["p50"] - 5000) < 100
                 assert row["count"] == 3
             elif row["app_version"] == "2.0.0" and row["date"] == date(2023, 1, 1):
-                assert abs(row["p50_duration_ms"] - 1000) < 100
+                assert abs(row["p50"] - 1000) < 100
                 assert row["count"] == 3
 
     def test_calculate_percentiles_accuracy(self, spark):
@@ -151,13 +151,13 @@ class TestCalculatePercentiles:
         result = result_df.collect()[0]
 
         # p50 ≈ 5000 (±1%)
-        assert abs(result["p50_value"] - 5000) / 5000 < 0.01
+        assert abs(result["p50"] - 5000) / 5000 < 0.01
 
         # p95 ≈ 9500 (±1%)
-        assert abs(result["p95_value"] - 9500) / 9500 < 0.01
+        assert abs(result["p95"] - 9500) / 9500 < 0.01
 
         # p99 ≈ 9900 (±1%)
-        assert abs(result["p99_value"] - 9900) / 9900 < 0.01
+        assert abs(result["p99"] - 9900) / 9900 < 0.01
 
 
 class TestCalculateDeviceCorrelation:

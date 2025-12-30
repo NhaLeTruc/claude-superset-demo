@@ -61,13 +61,13 @@ class TestCalculateDAU:
 
         # 2023-01-01
         assert results[0]["date"] == date(2023, 1, 1)
-        assert results[0]["dau"] == 2
+        assert results[0]["daily_active_users"] == 2
         assert results[0]["total_interactions"] == 5
         assert results[0]["total_duration_ms"] == 20000
 
         # 2023-01-02
         assert results[1]["date"] == date(2023, 1, 2)
-        assert results[1]["dau"] == 2
+        assert results[1]["daily_active_users"] == 2
         assert results[1]["total_interactions"] == 2
         assert results[1]["total_duration_ms"] == 10000
 
@@ -99,7 +99,7 @@ class TestCalculateDAU:
         assert result_df.count() == 7
         results = result_df.collect()
         for row in results:
-            assert row["dau"] == 1
+            assert row["daily_active_users"] == 1
 
     def test_calculate_dau_user_multiple_interactions(self, spark):
         """
@@ -127,7 +127,7 @@ class TestCalculateDAU:
 
         # Assert
         result = result_df.collect()[0]
-        assert result["dau"] == 1
+        assert result["daily_active_users"] == 1
         assert result["total_interactions"] == 10
 
     def test_calculate_dau_empty(self, spark):
@@ -151,7 +151,7 @@ class TestCalculateDAU:
         # Assert
         assert result_df.count() == 0
         assert "date" in result_df.columns
-        assert "dau" in result_df.columns
+        assert "daily_active_users" in result_df.columns
 
     def test_calculate_dau_missing_columns(self, spark):
         """
@@ -212,11 +212,11 @@ class TestCalculateMAU:
 
         # Jan 2023
         assert results[0]["month"] == date(2023, 1, 1)
-        assert results[0]["mau"] == 2
+        assert results[0]["monthly_active_users"] == 2
 
         # Feb 2023
         assert results[1]["month"] == date(2023, 2, 1)
-        assert results[1]["mau"] == 2
+        assert results[1]["monthly_active_users"] == 2
 
     def test_calculate_mau_daily_active_user(self, spark):
         """
@@ -242,7 +242,7 @@ class TestCalculateMAU:
 
         # Assert
         result = result_df.collect()[0]
-        assert result["mau"] == 1
+        assert result["monthly_active_users"] == 1
 
 
 class TestCalculateStickiness:
@@ -265,7 +265,7 @@ class TestCalculateStickiness:
         ]
         dau_schema = StructType([
             StructField("date", DateType(), nullable=False),
-            StructField("dau", LongType(), nullable=False),
+            StructField("daily_active_users", LongType(), nullable=False),
             StructField("total_interactions", LongType(), nullable=False),
             StructField("total_duration_ms", LongType(), nullable=False),
             StructField("avg_duration_per_user", DoubleType(), nullable=False)
@@ -276,7 +276,7 @@ class TestCalculateStickiness:
         mau_data = [(date(2023, 1, 1), 10, 3100)]
         mau_schema = StructType([
             StructField("month", DateType(), nullable=False),
-            StructField("mau", LongType(), nullable=False),
+            StructField("monthly_active_users", LongType(), nullable=False),
             StructField("total_interactions", LongType(), nullable=False)
         ])
         mau_df = spark.createDataFrame(mau_data, schema=mau_schema)
@@ -288,8 +288,8 @@ class TestCalculateStickiness:
         result = result_df.collect()[0]
         assert result["month"] == date(2023, 1, 1)
         assert result["avg_dau"] == 10.0
-        assert result["mau"] == 10
-        assert result["stickiness_ratio"] == 1.0
+        assert result["monthly_active_users"] == 10
+        assert result["stickiness_ratio"] == 100.0
 
     def test_calculate_stickiness_low(self, spark):
         """
@@ -307,7 +307,7 @@ class TestCalculateStickiness:
         ]
         dau_schema = StructType([
             StructField("date", DateType(), nullable=False),
-            StructField("dau", LongType(), nullable=False),
+            StructField("daily_active_users", LongType(), nullable=False),
             StructField("total_interactions", LongType(), nullable=False),
             StructField("total_duration_ms", LongType(), nullable=False),
             StructField("avg_duration_per_user", DoubleType(), nullable=False)
@@ -318,7 +318,7 @@ class TestCalculateStickiness:
         mau_data = [(date(2023, 1, 1), 100, 3100)]
         mau_schema = StructType([
             StructField("month", DateType(), nullable=False),
-            StructField("mau", LongType(), nullable=False),
+            StructField("monthly_active_users", LongType(), nullable=False),
             StructField("total_interactions", LongType(), nullable=False)
         ])
         mau_df = spark.createDataFrame(mau_data, schema=mau_schema)
@@ -328,7 +328,7 @@ class TestCalculateStickiness:
 
         # Assert
         result = result_df.collect()[0]
-        assert abs(result["stickiness_ratio"] - 0.1) < 0.01
+        assert abs(result["stickiness_ratio"] - 10.0) < 0.1
 
     def test_calculate_stickiness_single_day(self, spark):
         """
@@ -343,7 +343,7 @@ class TestCalculateStickiness:
         dau_data = [(date(2023, 1, 1), 5, 50, 25000, 5000.0)]
         dau_schema = StructType([
             StructField("date", DateType(), nullable=False),
-            StructField("dau", LongType(), nullable=False),
+            StructField("daily_active_users", LongType(), nullable=False),
             StructField("total_interactions", LongType(), nullable=False),
             StructField("total_duration_ms", LongType(), nullable=False),
             StructField("avg_duration_per_user", DoubleType(), nullable=False)
@@ -353,7 +353,7 @@ class TestCalculateStickiness:
         mau_data = [(date(2023, 1, 1), 5, 50)]
         mau_schema = StructType([
             StructField("month", DateType(), nullable=False),
-            StructField("mau", LongType(), nullable=False),
+            StructField("monthly_active_users", LongType(), nullable=False),
             StructField("total_interactions", LongType(), nullable=False)
         ])
         mau_df = spark.createDataFrame(mau_data, schema=mau_schema)
@@ -363,7 +363,7 @@ class TestCalculateStickiness:
 
         # Assert
         result = result_df.collect()[0]
-        assert result["stickiness_ratio"] == 1.0
+        assert result["stickiness_ratio"] == 100.0
 
 
 class TestIdentifyPowerUsers:
@@ -576,11 +576,11 @@ class TestCalculateCohortRetention:
         # Act
         result_df = calculate_cohort_retention(
             interactions_df, metadata_df,
-            cohort_period="week", analysis_weeks=4
+            cohort_period="week", retention_weeks=4
         )
 
         # Assert
-        results = result_df.orderBy("weeks_since_join").collect()
+        results = result_df.orderBy("week_number").collect()
         for week in range(4):
             assert results[week]["retention_rate"] == 100.0
 
@@ -624,11 +624,11 @@ class TestCalculateCohortRetention:
         # Act
         result_df = calculate_cohort_retention(
             interactions_df, metadata_df,
-            cohort_period="week", analysis_weeks=4
+            cohort_period="week", retention_weeks=4
         )
 
         # Assert
-        results = result_df.orderBy("weeks_since_join").collect()
+        results = result_df.orderBy("week_number").collect()
         assert results[0]["retention_rate"] == 100.0
         assert results[1]["retention_rate"] == 80.0
         assert results[2]["retention_rate"] == 60.0
@@ -675,7 +675,7 @@ class TestCalculateCohortRetention:
         # Act
         result_df = calculate_cohort_retention(
             interactions_df, metadata_df,
-            cohort_period="week", analysis_weeks=2
+            cohort_period="week", retention_weeks=2
         )
 
         # Assert
@@ -724,11 +724,11 @@ class TestCalculateCohortRetention:
         # Act
         result_df = calculate_cohort_retention(
             interactions_df, metadata_df,
-            cohort_period="week", analysis_weeks=4
+            cohort_period="week", retention_weeks=4
         )
 
         # Assert
-        results = result_df.orderBy("weeks_since_join").collect()
+        results = result_df.orderBy("week_number").collect()
         assert results[0]["active_users"] == 1  # Week 0
         assert results[1]["active_users"] == 1  # Week 1
         assert results[2]["active_users"] == 0  # Week 2 - NOT active

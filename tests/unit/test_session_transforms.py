@@ -166,7 +166,7 @@ class TestCalculateSessionMetrics:
         WHEN: calculate_session_metrics() is called
         THEN:
             - is_bounce=True
-            - actions_count=1
+            - action_count=1
             - session_duration_ms=duration of single action
         """
         # Arrange
@@ -189,7 +189,7 @@ class TestCalculateSessionMetrics:
         results = result_df.collect()
         assert len(results) == 1
         assert results[0]["is_bounce"] is True
-        assert results[0]["actions_count"] == 1
+        assert results[0]["action_count"] == 1
         assert results[0]["session_duration_ms"] == 5000
 
     def test_calculate_session_metrics_multi_action(self, spark):
@@ -198,7 +198,7 @@ class TestCalculateSessionMetrics:
         WHEN: calculate_session_metrics() is called
         THEN:
             - is_bounce=False
-            - actions_count=3
+            - action_count=3
             - session_duration_ms=time from first to last + last duration
         """
         # Arrange
@@ -223,7 +223,7 @@ class TestCalculateSessionMetrics:
         results = result_df.collect()
         assert len(results) == 1
         assert results[0]["is_bounce"] is False
-        assert results[0]["actions_count"] == 3
+        assert results[0]["action_count"] == 3
         # Duration: 15 min (900000 ms) + last action (2000 ms) = 902000 ms
         assert results[0]["session_duration_ms"] == 902000
 
@@ -262,15 +262,15 @@ class TestCalculateSessionMetrics:
 
         # s001 - bounce
         assert results[0]["is_bounce"] is True
-        assert results[0]["actions_count"] == 1
+        assert results[0]["action_count"] == 1
 
         # s002 - multi-action
         assert results[1]["is_bounce"] is False
-        assert results[1]["actions_count"] == 2
+        assert results[1]["action_count"] == 2
 
         # s003 - multi-action
         assert results[2]["is_bounce"] is False
-        assert results[2]["actions_count"] == 2
+        assert results[2]["action_count"] == 2
 
 
 class TestCalculateBounceRate:
@@ -287,7 +287,7 @@ class TestCalculateBounceRate:
             StructField("user_id", StringType(), nullable=False),
             StructField("session_id", StringType(), nullable=False),
             StructField("is_bounce", IntegerType(), nullable=False),
-            StructField("actions_count", IntegerType(), nullable=False),
+            StructField("action_count", IntegerType(), nullable=False),
             StructField("session_duration_ms", LongType(), nullable=False)
         ])
 
@@ -304,7 +304,7 @@ class TestCalculateBounceRate:
         # Assert
         results = result_df.collect()
         assert len(results) == 1
-        assert results[0]["bounce_rate"] == 1.0
+        assert results[0]["bounce_rate"] == 100.0  # Now returns percentage
         assert results[0]["total_sessions"] == 3
         assert results[0]["bounced_sessions"] == 3
 
@@ -319,7 +319,7 @@ class TestCalculateBounceRate:
             StructField("user_id", StringType(), nullable=False),
             StructField("session_id", StringType(), nullable=False),
             StructField("is_bounce", IntegerType(), nullable=False),
-            StructField("actions_count", IntegerType(), nullable=False),
+            StructField("action_count", IntegerType(), nullable=False),
             StructField("session_duration_ms", LongType(), nullable=False)
         ])
 
@@ -351,7 +351,7 @@ class TestCalculateBounceRate:
             StructField("user_id", StringType(), nullable=False),
             StructField("session_id", StringType(), nullable=False),
             StructField("is_bounce", IntegerType(), nullable=False),
-            StructField("actions_count", IntegerType(), nullable=False),
+            StructField("action_count", IntegerType(), nullable=False),
             StructField("session_duration_ms", LongType(), nullable=False)
         ])
 
@@ -370,7 +370,7 @@ class TestCalculateBounceRate:
         # Assert
         results = result_df.collect()
         assert len(results) == 1
-        assert abs(results[0]["bounce_rate"] - 0.4) < 0.001
+        assert abs(results[0]["bounce_rate"] - 40.0) < 0.1  # Now returns percentage (40%)
         assert results[0]["total_sessions"] == 5
         assert results[0]["bounced_sessions"] == 2
 
@@ -386,7 +386,7 @@ class TestCalculateBounceRate:
             StructField("session_id", StringType(), nullable=False),
             StructField("device_type", StringType(), nullable=False),
             StructField("is_bounce", IntegerType(), nullable=False),
-            StructField("actions_count", IntegerType(), nullable=False),
+            StructField("action_count", IntegerType(), nullable=False),
             StructField("session_duration_ms", LongType(), nullable=False)
         ])
 
@@ -409,12 +409,12 @@ class TestCalculateBounceRate:
 
         # iPad
         assert results[0]["device_type"] == "iPad"
-        assert abs(results[0]["bounce_rate"] - 0.5) < 0.001
+        assert abs(results[0]["bounce_rate"] - 50.0) < 0.1  # Now returns percentage (50%)
         assert results[0]["total_sessions"] == 2
         assert results[0]["bounced_sessions"] == 1
 
         # iPhone
         assert results[1]["device_type"] == "iPhone"
-        assert results[1]["bounce_rate"] == 0.0
+        assert results[1]["bounce_rate"] == 0.0  # 0% bounce rate
         assert results[1]["total_sessions"] == 2
         assert results[1]["bounced_sessions"] == 0

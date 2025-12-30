@@ -97,10 +97,10 @@ def calculate_stickiness(dau_df: DataFrame, mau_df: DataFrame) -> DataFrame:
     # Join with MAU
     stickiness_df = avg_dau_per_month.join(mau_df, on="month", how="inner")
 
-    # Calculate stickiness ratio
+    # Calculate stickiness ratio as percentage
     stickiness_df = stickiness_df.withColumn(
         "stickiness_ratio",
-        (F.col("avg_dau") / F.col("monthly_active_users")).cast("double")
+        ((F.col("avg_dau") / F.col("monthly_active_users")) * 100.0).cast("double")
     )
 
     return stickiness_df.select("month", "avg_dau", "monthly_active_users", "stickiness_ratio")
@@ -134,13 +134,26 @@ def identify_power_users(
     # Add date column for days_active calculation
     filtered_df = filtered_df.withColumn("date", F.to_date(F.col("timestamp")))
 
-    # Calculate user-level metrics
-    user_metrics = filtered_df.groupBy("user_id").agg(
+    # Build aggregation expressions
+    agg_exprs = [
         F.sum("duration_ms").alias("total_duration_ms"),
         F.count("*").alias("total_interactions"),
-        F.countDistinct("page_id").alias("unique_pages"),
         F.countDistinct("date").alias("days_active")
-    )
+    ]
+
+    # Add unique_pages only if page_id column exists
+    if "page_id" in filtered_df.columns:
+        agg_exprs.append(F.countDistinct("page_id").alias("unique_pages"))
+    else:
+        # If page_id doesn't exist, we'll add it as null later
+        pass
+
+    # Calculate user-level metrics
+    user_metrics = filtered_df.groupBy("user_id").agg(*agg_exprs)
+
+    # Add unique_pages as null if it wasn't calculated
+    if "unique_pages" not in user_metrics.columns:
+        user_metrics = user_metrics.withColumn("unique_pages", F.lit(None).cast("long"))
 
     # Calculate derived metrics
     user_metrics = user_metrics.withColumn(
@@ -171,7 +184,7 @@ def calculate_cohort_retention(
     interactions_df: DataFrame,
     metadata_df: DataFrame,
     cohort_period: str = "week",
-    analysis_weeks: int = 26
+    retention_weeks: int = 26
 ) -> DataFrame:
     """
     Calculate cohort retention analysis.
@@ -180,15 +193,17 @@ def calculate_cohort_retention(
         interactions_df: User interactions [user_id, timestamp, ...]
         metadata_df: User metadata with join_date [user_id, join_date, ...]
         cohort_period: "week" or "month" (default: "week")
-        analysis_weeks: Number of weeks to analyze
+        retention_weeks: Number of weeks to analyze (renamed from analysis_weeks)
 
     Returns:
         DataFrame with [cohort_week, weeks_since_join, cohort_size, active_users, retention_rate]
     """
     # Calculate cohort week (first day of week user joined)
+    # Try join_date first, fall back to registration_date
+    join_date_col = "join_date" if "join_date" in metadata_df.columns else "registration_date"
     metadata_with_cohort = metadata_df.withColumn(
         "cohort_week",
-        F.date_trunc("week", F.col("join_date"))
+        F.date_trunc("week", F.col(join_date_col))
     )
 
     # Add week from interactions
@@ -210,10 +225,10 @@ def calculate_cohort_retention(
         ((F.unix_timestamp("interaction_week") - F.unix_timestamp("cohort_week")) / (7 * 24 * 3600)).cast("int")
     )
 
-    # Filter to analysis period
+    # Filter to retention period
     joined_df = joined_df.filter(
         (F.col("weeks_since_join") >= 0) &
-        (F.col("weeks_since_join") < analysis_weeks)
+        (F.col("weeks_since_join") < retention_weeks)
     )
 
     # Get cohort sizes
@@ -243,7 +258,7 @@ def calculate_cohort_retention(
     from itertools import product
     all_combinations = []
     for cohort_row in cohorts:
-        for week in range(analysis_weeks):
+        for week in range(retention_weeks):
             all_combinations.append((
                 cohort_row["cohort_week"],
                 week,

@@ -76,7 +76,7 @@ def calculate_percentiles(
         # Create a row with group keys + percentile values
         row_dict = {col: group_row[col] for col in group_by_columns}
         for i, p in enumerate(percentiles):
-            percentile_name = f"p{int(p * 100)}_{value_column}"
+            percentile_name = f"p{int(p * 100)}"
             row_dict[percentile_name] = float(percentile_values[i])
 
         percentile_results.append(row_dict)
@@ -93,7 +93,7 @@ def calculate_percentiles(
             schema_fields.append(StructField(col, orig_field.dataType, nullable=False))
 
         for p in percentiles:
-            percentile_name = f"p{int(p * 100)}_{value_column}"
+            percentile_name = f"p{int(p * 100)}"
             schema_fields.append(StructField(percentile_name, DoubleType(), nullable=True))
 
         percentile_schema = StructType(schema_fields)

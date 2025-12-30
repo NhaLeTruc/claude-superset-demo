@@ -111,8 +111,9 @@ def calculate_session_metrics(sessionized_df: DataFrame) -> DataFrame:
     Calculate metrics for each session.
 
     Computes:
-    - actions_count: Number of interactions in the session
+    - action_count: Number of interactions in the session
     - session_duration_ms: Time from first to last interaction + last action duration
+    - session_duration_seconds: Session duration in seconds (converted from ms)
     - is_bounce: Boolean indicating single-action sessions
     - avg_action_duration_ms: Average duration of actions in session
 
@@ -125,8 +126,9 @@ def calculate_session_metrics(sessionized_df: DataFrame) -> DataFrame:
     Schema:
         - user_id: String
         - session_id: String
-        - actions_count: Integer (number of interactions)
+        - action_count: Integer (number of interactions)
         - session_duration_ms: Long (total session time in milliseconds)
+        - session_duration_seconds: Double (total session time in seconds)
         - is_bounce: Boolean (True if only 1 action)
         - avg_action_duration_ms: Double (average action duration)
         - session_start_time: Timestamp (first interaction)
@@ -143,16 +145,28 @@ def calculate_session_metrics(sessionized_df: DataFrame) -> DataFrame:
     if missing_cols:
         raise ValueError(f"Missing required columns: {missing_cols}")
 
-    # Group by session and calculate metrics
-    session_metrics = sessionized_df.groupBy("user_id", "session_id").agg(
-        F.count("*").alias("actions_count"),
+    # Identify extra columns to preserve (columns that aren't part of the required set)
+    all_cols = set(sessionized_df.columns)
+    required_set = set(required_cols)
+    extra_cols = all_cols - required_set - {"session_id"}  # session_id is in groupBy
+
+    # Build aggregation expressions
+    agg_exprs = [
+        F.count("*").alias("action_count"),
         F.min("timestamp").alias("session_start_time"),
         F.max("timestamp").alias("session_end_time"),
         F.sum("duration_ms").alias("total_action_duration_ms"),
         F.avg("duration_ms").alias("avg_action_duration_ms"),
         # Get the duration of the last action
         F.max(F.struct("timestamp", "duration_ms")).getField("duration_ms").alias("last_action_duration_ms")
-    )
+    ]
+
+    # Add first() for each extra column to preserve them
+    for col_name in sorted(extra_cols):  # Sort for deterministic order
+        agg_exprs.append(F.first(col_name).alias(col_name))
+
+    # Group by session and calculate metrics
+    session_metrics = sessionized_df.groupBy("user_id", "session_id").agg(*agg_exprs)
 
     # Calculate session duration: time span + last action duration
     # For single action: session_duration = action duration
@@ -160,7 +174,7 @@ def calculate_session_metrics(sessionized_df: DataFrame) -> DataFrame:
     session_metrics_with_duration = session_metrics.withColumn(
         "session_duration_ms",
         F.when(
-            F.col("actions_count") == 1,
+            F.col("action_count") == 1,
             F.col("last_action_duration_ms")
         ).otherwise(
             ((F.unix_timestamp("session_end_time") - F.unix_timestamp("session_start_time")) * 1000).cast(LongType()) +
@@ -171,21 +185,16 @@ def calculate_session_metrics(sessionized_df: DataFrame) -> DataFrame:
     # Mark bounce sessions (single action)
     session_metrics_with_bounce = session_metrics_with_duration.withColumn(
         "is_bounce",
-        (F.col("actions_count") == 1).cast(BooleanType())
+        (F.col("action_count") == 1).cast(BooleanType())
     )
 
-    # Select final columns
-    result_df = session_metrics_with_bounce.select(
-        "user_id",
-        "session_id",
-        "actions_count",
-        "session_duration_ms",
-        "is_bounce",
-        "avg_action_duration_ms",
-        "session_start_time",
-        "session_end_time"
+    # Add session_duration_seconds column (convert from milliseconds)
+    result_df = session_metrics_with_bounce.withColumn(
+        "session_duration_seconds",
+        (F.col("session_duration_ms") / 1000.0).cast("double")
     )
 
+    # Return all columns (preserves extra columns from input DataFrame)
     return result_df
 
 
@@ -210,13 +219,13 @@ def calculate_bounce_rate(
     Schema (ungrouped):
         - total_sessions: Long
         - bounced_sessions: Long
-        - bounce_rate: Double (0.0 to 1.0)
+        - bounce_rate: Double (percentage: 0.0 to 100.0)
 
     Schema (grouped):
         - <group_by_columns>: Original types
         - total_sessions: Long
         - bounced_sessions: Long
-        - bounce_rate: Double
+        - bounce_rate: Double (percentage: 0.0 to 100.0)
 
     Example:
         >>> # Overall bounce rate
@@ -260,21 +269,21 @@ def calculate_bounce_rate(
         # Grouped bounce rate
         bounce_stats = session_metrics_df.groupBy(*group_cols).agg(
             F.count("*").alias("total_sessions"),
-            F.sum("is_bounce").alias("bounced_sessions")
+            F.sum(F.col("is_bounce").cast("int")).alias("bounced_sessions")
         )
     else:
         # Overall bounce rate
         bounce_stats = session_metrics_df.agg(
             F.count("*").alias("total_sessions"),
-            F.sum("is_bounce").alias("bounced_sessions")
+            F.sum(F.col("is_bounce").cast("int")).alias("bounced_sessions")
         )
 
-    # Calculate bounce rate (handle division by zero)
+    # Calculate bounce rate as percentage (handle division by zero)
     result_df = bounce_stats.withColumn(
         "bounce_rate",
         F.when(
             F.col("total_sessions") > 0,
-            F.col("bounced_sessions").cast(DoubleType()) / F.col("total_sessions")
+            (F.col("bounced_sessions").cast(DoubleType()) / F.col("total_sessions")) * 100.0
         ).otherwise(0.0)
     )
 

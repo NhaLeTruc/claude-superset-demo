@@ -180,13 +180,13 @@ class TestUserEngagementJob:
         stickiness_df = calculate_stickiness(dau_df, mau_df)
 
         # Verify calculations
-        results = stickiness_df.orderBy("date").collect()
-        assert len(results) == 3
+        results = stickiness_df.orderBy("month").collect()
+        assert len(results) == 1  # Only one month
 
-        # Check stickiness ratios (DAU/MAU * 100)
-        assert results[0]["stickiness_ratio"] == pytest.approx(20.0, rel=0.01)
-        assert results[1]["stickiness_ratio"] == pytest.approx(25.0, rel=0.01)
-        assert results[2]["stickiness_ratio"] == pytest.approx(30.0, rel=0.01)
+        # Check stickiness ratio (avg DAU/MAU * 100)
+        # Avg DAU = (20 + 25 + 30) / 3 = 25
+        # Stickiness = 25 / 100 * 100 = 25%
+        assert results[0]["stickiness_ratio"] == pytest.approx(25.0, rel=0.01)
 
     def test_power_user_identification(self, spark, sample_metadata_data):
         """Test power user identification with varied activity levels."""

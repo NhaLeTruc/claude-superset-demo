@@ -164,6 +164,11 @@ def identify_power_users(
         "avg_duration_per_interaction",
         (F.col("total_duration_ms") / F.col("total_interactions")).cast("double")
     )
+    # Add alias for test compatibility
+    user_metrics = user_metrics.withColumn(
+        "avg_duration_ms",
+        F.col("avg_duration_per_interaction")
+    )
 
     # Calculate threshold for top percentile
     threshold_value = user_metrics.approxQuantile("total_duration_ms", [percentile], 0.01)[0]
@@ -198,6 +203,19 @@ def calculate_cohort_retention(
     Returns:
         DataFrame with [cohort_week, weeks_since_join, cohort_size, active_users, retention_rate]
     """
+    # Handle empty interactions dataframe
+    if interactions_df.count() == 0:
+        # Return empty dataframe with correct schema
+        from pyspark.sql.types import StructType, StructField, DateType, IntegerType, LongType, DoubleType
+        empty_schema = StructType([
+            StructField("cohort_week", DateType(), nullable=False),
+            StructField("week_number", IntegerType(), nullable=False),
+            StructField("cohort_size", LongType(), nullable=False),
+            StructField("active_users", LongType(), nullable=False),
+            StructField("retention_rate", DoubleType(), nullable=False)
+        ])
+        return interactions_df.sql_ctx.createDataFrame([], schema=empty_schema)
+
     # Calculate cohort week (first day of week user joined)
     # Try join_date first, fall back to registration_date
     join_date_col = "join_date" if "join_date" in metadata_df.columns else "registration_date"
@@ -287,9 +305,12 @@ def calculate_cohort_retention(
     else:
         result_df = retention_df
 
+    # Rename weeks_since_join to week_number for test compatibility
+    result_df = result_df.withColumnRenamed("weeks_since_join", "week_number")
+
     return result_df.select(
         "cohort_week",
-        "weeks_since_join",
+        "week_number",
         "cohort_size",
         "active_users",
         "retention_rate"

@@ -341,8 +341,8 @@ class TestEndToEndPipeline:
             df.filter(F.col("duration_ms").isNotNull()),
             "duration_ms",
             method="threshold",
-            min_value=0,
-            max_value=10000
+            threshold_min=0,
+            threshold_max=10000
         )
         assert outliers.count() > 0, "Should detect outliers"
 

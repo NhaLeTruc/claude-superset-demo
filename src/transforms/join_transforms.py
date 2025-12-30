@@ -219,15 +219,17 @@ def optimized_join(
             # Apply salting to large_df
             large_salted = apply_salting(large_df, hot_keys_df, key_column=join_key, salt_factor=salt_factor)
 
-            # Explode small_df to match salted keys
+            # Explode small_df to match salted keys - rename join_key to avoid ambiguity
             small_exploded = explode_for_salting(small_df, hot_keys_df, key_column=join_key, salt_factor=salt_factor)
+            # Rename the join key in small table to avoid duplicate column after join
+            small_exploded = small_exploded.withColumnRenamed(join_key, f"{join_key}_small")
 
             # Join on salted keys
             salted_key = f"{join_key}_salted"
             result_df = large_salted.join(small_exploded, on=salted_key, how=join_type)
 
-            # Clean up salt columns
-            result_df = result_df.drop("salt", salted_key)
+            # Clean up salt columns and renamed join key
+            result_df = result_df.drop("salt", salted_key, f"{join_key}_small")
 
             return result_df
 
@@ -247,15 +249,17 @@ def optimized_join(
             # Apply salting to large_df
             large_salted = apply_salting(large_df, detected_hot_keys, key_column=join_key, salt_factor=salt_factor)
 
-            # Explode small_df to match salted keys
+            # Explode small_df to match salted keys - rename join_key to avoid ambiguity
             small_exploded = explode_for_salting(small_df, detected_hot_keys, key_column=join_key, salt_factor=salt_factor)
+            # Rename the join key in small table to avoid duplicate column after join
+            small_exploded = small_exploded.withColumnRenamed(join_key, f"{join_key}_small")
 
             # Join on salted keys
             salted_key = f"{join_key}_salted"
             result_df = large_salted.join(small_exploded, on=salted_key, how=join_type)
 
-            # Clean up salt columns
-            result_df = result_df.drop("salt", salted_key)
+            # Clean up salt columns and renamed join key
+            result_df = result_df.drop("salt", salted_key, f"{join_key}_small")
 
             return result_df
 

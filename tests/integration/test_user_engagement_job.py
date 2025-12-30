@@ -279,9 +279,32 @@ class TestUserEngagementJob:
 
         df = spark.createDataFrame(data, schema)
 
+        # Create metadata with registration dates aligned to base_date
+        metadata_schema = StructType([
+            StructField("user_id", StringType(), False),
+            StructField("country", StringType(), False),
+            StructField("device_type", StringType(), False),
+            StructField("subscription_type", StringType(), False),
+            StructField("registration_date", TimestampType(), False),
+            StructField("app_version", StringType(), False),
+        ])
+
+        metadata_data = []
+        for user_idx in range(10):
+            metadata_data.append((
+                f"user_{user_idx}",
+                "US",
+                "iOS",
+                "free",
+                base_date,  # All users register on base_date to form a cohort
+                "1.0.0"
+            ))
+
+        metadata_df = spark.createDataFrame(metadata_data, metadata_schema)
+
         # Calculate retention
         retention_df = calculate_cohort_retention(
-            df, sample_metadata_data,
+            df, metadata_df,
             cohort_period="week",
             retention_weeks=3
         )

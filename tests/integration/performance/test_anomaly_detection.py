@@ -52,7 +52,7 @@ class TestAnomalyDetection:
         anomalies = detect_anomalies_statistical(
             df,
             value_column="duration_ms",
-            threshold=3.0
+            z_threshold=3.0
         )
 
         anomaly_count = anomalies.count()
@@ -100,7 +100,7 @@ class TestAnomalyDetection:
         anomalies = detect_anomalies_statistical(
             df,
             value_column="duration_ms",
-            threshold=3.0,
+            z_threshold=3.0,
             group_by_columns=["group"]
         )
 

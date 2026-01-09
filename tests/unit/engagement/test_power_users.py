@@ -178,5 +178,5 @@ class TestIdentifyPowerUsers:
         assert result["unique_pages"] == 2  # page1, page2
         assert result["days_active"] == 2  # Jan 1, Jan 2
         assert result["total_duration_ms"] == 60000
-        assert abs(result["total_duration_hours"] - 60000/3600000) < 0.01
+        assert abs(result["hours_spent"] - 60000/3600000) < 0.01
         assert result["avg_duration_per_interaction"] == 20000.0

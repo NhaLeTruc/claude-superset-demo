@@ -19,16 +19,13 @@ class TestDetectAnomaliesStatistical:
     def test_detect_anomalies_statistical_basic(self, spark):
         """
         GIVEN:
-            - date=2023-01-01: avg_duration_ms = 1000
-            - date=2023-01-02: avg_duration_ms = 1100
-            - date=2023-01-03: avg_duration_ms = 1050
-            - date=2023-01-04: avg_duration_ms = 5000 (anomaly!)
-            - date=2023-01-05: avg_duration_ms = 1000
-        WHEN: detect_anomalies_statistical() with threshold=3.0
+            - 28 days with normal values around 1000ms (stddev~100ms)
+            - 2 days with extreme outliers: 5000ms, 6000ms
+        WHEN: detect_anomalies_statistical() with z_threshold=3.0
         THEN:
-            - Returns 1 row (2023-01-04)
-            - is_anomaly = True
-            - z_score > 3.0
+            - Returns 2 anomalies
+            - Both have z_score > 3.0
+            - anomaly_type = "high"
         """
         # Arrange
         schema = StructType([
@@ -36,39 +33,55 @@ class TestDetectAnomaliesStatistical:
             StructField("avg_duration_ms", DoubleType(), nullable=False)
         ])
 
-        data = [
-            (date(2023, 1, 1), 1000.0),
-            (date(2023, 1, 2), 1100.0),
-            (date(2023, 1, 3), 1050.0),
-            (date(2023, 1, 4), 5000.0),  # Anomaly
-            (date(2023, 1, 5), 1000.0)
+        # 28 normal days: values between 900-1100
+        import random
+        random.seed(42)
+        normal_data = [
+            (date(2023, 1, day), 1000.0 + random.randint(-100, 100))
+            for day in range(1, 29)
         ]
-        df = spark.createDataFrame(data, schema=schema)
+
+        # 2 anomaly days
+        outlier_data = [
+            (date(2023, 1, 29), 5000.0),
+            (date(2023, 1, 30), 6000.0)
+        ]
+
+        df = spark.createDataFrame(normal_data + outlier_data, schema=schema)
 
         # Act
         result_df = detect_anomalies_statistical(
             df,
             value_column="avg_duration_ms",
-            threshold=3.0
+            z_threshold=3.0
         )
 
-        # Assert - filter only anomalies
-        anomalies_df = result_df.filter(F.col("is_anomaly") == True)
-        assert anomalies_df.count() == 1, "Expected 1 anomaly"
+        # Assert - function returns only anomalies
+        assert result_df.count() == 2, "Expected 2 anomalies"
 
-        anomaly = anomalies_df.collect()[0]
-        assert anomaly["date"] == date(2023, 1, 4)
-        assert anomaly["is_anomaly"] == True
-        assert anomaly["z_score"] > 3.0
+        # Check columns exist
+        assert "z_score" in result_df.columns
+        assert "baseline_mean" in result_df.columns
+        assert "baseline_stddev" in result_df.columns
+        assert "anomaly_type" in result_df.columns
+
+        # Check all anomalies have z_score > 3.0 and type = "high"
+        anomalies = result_df.collect()
+        anomaly_dates = sorted([row["date"] for row in anomalies])
+        assert anomaly_dates == [date(2023, 1, 29), date(2023, 1, 30)]
+
+        for row in anomalies:
+            assert row["z_score"] > 3.0, f"Expected z_score > 3.0, got {row['z_score']}"
+            assert row["anomaly_type"] == "high"
 
     def test_detect_anomalies_statistical_grouped(self, spark):
         """
         GIVEN:
-            - app_version=1.0.0: [1000, 1100, 1050, 5000, 1000] (1 anomaly)
-            - app_version=2.0.0: [2000, 2100, 2050, 2000, 2100] (0 anomalies)
+            - app_version=1.0.0: 28 normal values + 2 outliers (5000, 6000)
+            - app_version=2.0.0: 30 normal values (no anomalies)
         WHEN: detect_anomalies_statistical() grouped by app_version
         THEN:
-            - Returns 1 anomaly (v1.0.0, value=5000)
+            - Returns 2 anomalies (both from v1.0.0)
             - No anomalies for v2.0.0
         """
         # Arrange
@@ -78,41 +91,51 @@ class TestDetectAnomaliesStatistical:
             StructField("avg_duration_ms", DoubleType(), nullable=False)
         ])
 
-        data = [
-            # v1.0.0 - has anomaly
-            ("1.0.0", date(2023, 1, 1), 1000.0),
-            ("1.0.0", date(2023, 1, 2), 1100.0),
-            ("1.0.0", date(2023, 1, 3), 1050.0),
-            ("1.0.0", date(2023, 1, 4), 5000.0),  # Anomaly
-            ("1.0.0", date(2023, 1, 5), 1000.0),
-            # v2.0.0 - no anomalies
-            ("2.0.0", date(2023, 1, 1), 2000.0),
-            ("2.0.0", date(2023, 1, 2), 2100.0),
-            ("2.0.0", date(2023, 1, 3), 2050.0),
-            ("2.0.0", date(2023, 1, 4), 2000.0),
-            ("2.0.0", date(2023, 1, 5), 2100.0)
+        import random
+        random.seed(42)
+
+        # v1.0.0 - 28 normal + 2 outliers
+        v1_normal = [
+            ("1.0.0", date(2023, 1, day), 1000.0 + random.randint(-100, 100))
+            for day in range(1, 29)
         ]
-        df = spark.createDataFrame(data, schema=schema)
+        v1_outliers = [
+            ("1.0.0", date(2023, 1, 29), 5000.0),
+            ("1.0.0", date(2023, 1, 30), 6000.0)
+        ]
+
+        # v2.0.0 - 30 normal values, no outliers
+        v2_normal = [
+            ("2.0.0", date(2023, 1, day), 2000.0 + random.randint(-100, 100))
+            for day in range(1, 31)
+        ]
+
+        df = spark.createDataFrame(v1_normal + v1_outliers + v2_normal, schema=schema)
 
         # Act
         result_df = detect_anomalies_statistical(
             df,
             value_column="avg_duration_ms",
             group_by_columns=["app_version"],
-            threshold=3.0
+            z_threshold=3.0
         )
 
-        # Assert
-        anomalies_df = result_df.filter(F.col("is_anomaly") == True)
-        assert anomalies_df.count() == 1, "Expected 1 anomaly"
+        # Assert - function returns only anomalies
+        assert result_df.count() == 2, "Expected 2 anomalies"
 
-        anomaly = anomalies_df.collect()[0]
-        assert anomaly["app_version"] == "1.0.0"
-        assert anomaly["date"] == date(2023, 1, 4)
-        assert anomaly["avg_duration_ms"] == 5000.0
+        # Check all anomalies are from v1.0.0
+        anomalies = result_df.collect()
+        for anomaly in anomalies:
+            assert anomaly["app_version"] == "1.0.0"
+            assert anomaly["z_score"] > 3.0
+            assert anomaly["anomaly_type"] == "high"
+
+        # Check specific dates
+        anomaly_dates = sorted([row["date"] for row in anomalies])
+        assert anomaly_dates == [date(2023, 1, 29), date(2023, 1, 30)]
 
         # Check v2.0.0 has no anomalies
-        v2_anomalies = anomalies_df.filter(F.col("app_version") == "2.0.0").count()
+        v2_anomalies = result_df.filter(F.col("app_version") == "2.0.0").count()
         assert v2_anomalies == 0, "v2.0.0 should have no anomalies"
 
     def test_detect_anomalies_statistical_no_anomalies(self, spark):
@@ -138,9 +161,8 @@ class TestDetectAnomaliesStatistical:
         result_df = detect_anomalies_statistical(
             df,
             value_column="avg_duration_ms",
-            threshold=3.0
+            z_threshold=3.0
         )
 
-        # Assert
-        anomalies_df = result_df.filter(F.col("is_anomaly") == True)
-        assert anomalies_df.count() == 0, "Expected no anomalies"
+        # Assert - function returns only anomalies, so empty = no anomalies
+        assert result_df.count() == 0, "Expected no anomalies"

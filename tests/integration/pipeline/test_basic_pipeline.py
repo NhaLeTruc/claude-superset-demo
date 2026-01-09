@@ -146,7 +146,7 @@ class TestBasicPipeline:
         anomalies_df = detect_anomalies_statistical(
             interactions_df,
             value_column="duration_ms",
-            threshold=3.0
+            z_threshold=3.0
         )
         anomaly_count = anomalies_df.count()
 

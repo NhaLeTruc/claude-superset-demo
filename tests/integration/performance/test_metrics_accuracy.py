@@ -56,7 +56,7 @@ class TestPerformanceMetricsAccuracy:
         anomalies_df = detect_anomalies_statistical(
             sample_interactions_data,
             value_column="duration_ms",
-            threshold=3.0
+            z_threshold=3.0
         )
 
         # Should complete without errors
@@ -317,7 +317,7 @@ class TestPerformanceMetricsAccuracy:
         device_count = device_corr.count()
 
         anomalies = detect_anomalies_statistical(
-            sample_interactions_data, "duration_ms", threshold=3.0
+            sample_interactions_data, "duration_ms", z_threshold=3.0
         )
         anomaly_count = anomalies.count()
 

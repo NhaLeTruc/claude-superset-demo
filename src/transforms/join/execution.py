@@ -13,8 +13,8 @@ def optimized_join(
     large_df: DataFrame,
     small_df: DataFrame,
     join_key: str,
-    hot_keys_df: DataFrame = None,
     join_type: str = "inner",
+    hot_keys_df: DataFrame = None,
     enable_broadcast: bool = True,
     enable_salting: bool = True,
     broadcast_threshold_mb: int = None,
@@ -35,8 +35,8 @@ def optimized_join(
         large_df: Large DataFrame (e.g., interactions)
         small_df: Small DataFrame (e.g., metadata)
         join_key: Column to join on
-        hot_keys_df: Optional pre-computed hot keys DataFrame (output from identify_hot_keys)
         join_type: "inner", "left", "right", "outer"
+        hot_keys_df: Optional pre-computed hot keys DataFrame (output from identify_hot_keys)
         enable_broadcast: Try broadcast join if possible
         enable_salting: Apply salting if skew detected
         broadcast_threshold_mb: Broadcast threshold in MB (not used, kept for compatibility)

@@ -29,7 +29,7 @@ class TestDataProcessingJob:
         )
 
         # Import required functions
-        from src.transforms.join_transforms import identify_hot_keys, optimized_join
+        from src.transforms.join import identify_hot_keys, optimized_join
         from src.utils.data_quality import validate_schema, detect_nulls
         from src.schemas.interactions_schema import INTERACTIONS_SCHEMA
         from src.schemas.metadata_schema import METADATA_SCHEMA
@@ -94,7 +94,7 @@ class TestDataProcessingJob:
     def test_data_processing_with_skewed_data(self, spark, test_data_paths,
                                              sample_skewed_interactions, sample_metadata_data):
         """Test data processing with highly skewed data (power users)."""
-        from src.transforms.join_transforms import identify_hot_keys, optimized_join
+        from src.transforms.join import identify_hot_keys, optimized_join
 
         # Create metadata for all users (power + normal)
         power_user_metadata = []
@@ -209,7 +209,7 @@ class TestDataProcessingJob:
     def test_partitioned_output(self, spark, test_data_paths,
                                sample_interactions_data, sample_metadata_data):
         """Test that output is correctly partitioned by date."""
-        from src.transforms.join_transforms import optimized_join, identify_hot_keys
+        from src.transforms.join import optimized_join, identify_hot_keys
 
         # Add date column to interactions
         interactions_with_date = sample_interactions_data.withColumn(
@@ -222,6 +222,7 @@ class TestDataProcessingJob:
             interactions_with_date,
             sample_metadata_data,
             "user_id",
+            "inner",
             hot_keys
         )
 
@@ -255,7 +256,7 @@ class TestDataProcessingJob:
     def test_monitoring_integration(self, spark, sample_interactions_data, sample_metadata_data):
         """Test monitoring accumulators track processing metrics."""
         from src.utils.monitoring import create_monitoring_context, format_monitoring_summary
-        from src.transforms.join_transforms import identify_hot_keys, optimized_join
+        from src.transforms.join import identify_hot_keys, optimized_join
 
         # Create monitoring context
         context = create_monitoring_context(spark.sparkContext, "test_data_processing")
@@ -270,6 +271,7 @@ class TestDataProcessingJob:
             sample_interactions_data,
             sample_metadata_data,
             "user_id",
+            "inner",
             hot_keys
         )
 
@@ -284,7 +286,7 @@ class TestDataProcessingJob:
     def test_performance_no_timeout(self, spark, sample_interactions_data, sample_metadata_data):
         """Test that processing completes in reasonable time."""
         import time
-        from src.transforms.join_transforms import identify_hot_keys, optimized_join
+        from src.transforms.join import identify_hot_keys, optimized_join
 
         start_time = time.time()
 
@@ -294,6 +296,7 @@ class TestDataProcessingJob:
             sample_interactions_data,
             sample_metadata_data,
             "user_id",
+            "inner",
             hot_keys
         )
 
